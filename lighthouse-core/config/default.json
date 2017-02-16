@@ -2,6 +2,7 @@
   "passes": [{
     "recordNetwork": true,
     "recordTrace": true,
+    "useThrottling": true,
     "gatherers": [
       "url",
       "https",
@@ -16,12 +17,14 @@
   {
     "passName": "offlinePass",
     "recordNetwork": true,
+    "useThrottling": false,
     "gatherers": [
       "service-worker",
       "offline"
     ]
   },
   {
+    "useThrottling": false,
     "gatherers": [
       "http-redirect",
       "html-without-javascript"
@@ -29,6 +32,7 @@
   }, {
     "recordNetwork": true,
     "passName": "dbw",
+    "useThrottling": false,
     "gatherers": [
       "chrome-console-messages",
       "styles",
