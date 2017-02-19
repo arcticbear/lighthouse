@@ -12,6 +12,8 @@ const chromeManifest = require('gulp-chrome-manifest');
 const debug = require('gulp-debug');
 const eslint = require('gulp-eslint');
 const livereload = require('gulp-livereload');
+const uglifyJsHarmony = require('uglify-js-harmony');
+const uglify = require('gulp-uglify/minifier');
 const tap = require('gulp-tap');
 const zip = require('gulp-zip');
 const LighthouseRunner = require('../lighthouse-core/runner');
@@ -86,13 +88,11 @@ gulp.task('chromeManifest', () => {
 
 function applyBrowserifyTransforms(bundle) {
   // Fix an issue with imported speedline code that doesn't brfs well.
-  return bundle.transform('./fs-transform', {
-    global: true
-  })
+  return bundle.transform('./fs-transform', {global: true})
   // Transform the fs.readFile etc, but do so in all the modules.
-  .transform('brfs', {
-    global: true
-  });
+  .transform('brfs', {global: true})
+  // Strip everything out of package.json includes except for the version.
+  .transform('package-json-versionify');
 }
 
 gulp.task('browserify-lighthouse', () => {
@@ -107,9 +107,7 @@ gulp.task('browserify-lighthouse', () => {
 
       // Do the additional transform to convert references of devtools-timeline-model
       // to the modified version internal to Lighthouse.
-      bundle.transform('./dtm-transform.js', {
-        global: true
-      })
+      bundle.transform('./dtm-transform.js', {global: true})
       .ignore('../lighthouse-core/lib/asset-saver.js') // relative from gulpfile location
       .ignore('source-map')
       .ignore('whatwg-url')
@@ -155,6 +153,18 @@ gulp.task('browserify', cb => {
   runSequence('browserify-lighthouse', 'browserify-other', cb);
 });
 
+gulp.task('compilejs', () => {
+  return gulp.src([
+    'dist/scripts/lighthouse-background.js'
+  ])
+  .pipe(uglify({mangle: false}, uglifyJsHarmony).on('error', err => {
+    gutil.log(gutil.colors.red('[Error]'), err.toString());
+    // eslint-disable-next-line
+    this.emit('end');
+  }))
+  .pipe(gulp.dest('dist/scripts'));
+});
+
 gulp.task('clean', () => {
   return del(['.tmp', 'dist', 'app/scripts']).then(paths =>
     paths.forEach(path => gutil.log('deleted:', gutil.colors.blue(path)))
@@ -191,6 +201,10 @@ gulp.task('build', cb => {
   runSequence(
     'lint', 'browserify', 'chromeManifest',
     ['html', 'images', 'css', 'extras'], cb);
+});
+
+gulp.task('build:production', cb => {
+  runSequence('build', 'compilejs', cb);
 });
 
 gulp.task('default', ['clean'], cb => {
