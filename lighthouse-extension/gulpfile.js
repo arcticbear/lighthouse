@@ -34,9 +34,9 @@ const computedArtifacts = fs.readdirSync(
  * @param {string} fileContent File content as a string.
  * @return {string} modified file str
  */
-function stripInlineLicenseComments(fileContent) {
-  return fileContent.replace(/(<!--|\/\*\*)[\s\S]*?\d{4} Google Inc[\s\S]*?(-->|\*\/)/g, '');
-}
+// function stripInlineLicenseComments(fileContent) {
+//   return fileContent.replace(/(<!--|\/\*\*)[\s\S]*?\d{4} Google Inc[\s\S]*?(-->|\*\/)/g, '');
+// }
 
 gulp.task('extras', () => {
   return gulp.src([
@@ -180,11 +180,11 @@ gulp.task('compilejs', () => {
       // eslint-disable-next-line no-invalid-this
       this.emit('end');
     }))
-    .pipe(tap(file => {
-      const content = file.contents.toString();
-      file.contents = new Buffer(stripInlineLicenseComments(content));
-      return file;
-    }))
+    // .pipe(tap(file => {
+    //   const content = file.contents.toString();
+    //   file.contents = new Buffer(stripInlineLicenseComments(content));
+    //   return file;
+    // }))
     .pipe(gulp.dest('dist/scripts'));
 });
 
