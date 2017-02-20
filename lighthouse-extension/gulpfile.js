@@ -29,6 +29,15 @@ const computedArtifacts = fs.readdirSync(
     .filter(f => /\.js$/.test(f))
     .map(f => '../lighthouse-core/gather/computed/' + f.replace(/\.js$/, ''));
 
+/**
+ * Removes inlined license comments from file.
+ * @param {string} fileContent File content as a string.
+ * @return {string} modified file str
+ */
+function stripInlineLicenseComments(fileContent) {
+  return fileContent.replace(/(<!--|\/\*\*)[\s\S]*?\d{4} Google Inc[\s\S]*?(-->|\*\/)/g, '');
+}
+
 gulp.task('extras', () => {
   return gulp.src([
     'app/*.*',
@@ -154,15 +163,29 @@ gulp.task('browserify', cb => {
 });
 
 gulp.task('compilejs', () => {
-  return gulp.src([
-    'dist/scripts/lighthouse-background.js'
-  ])
-  .pipe(uglify({mangle: false}, uglifyJsHarmony).on('error', err => {
-    gutil.log(gutil.colors.red('[Error]'), err.toString());
-    // eslint-disable-next-line
-    this.emit('end');
-  }))
-  .pipe(gulp.dest('dist/scripts'));
+  const opts = {
+    mangle: false, // Preserve  array notation property access. Needed for artifact name lookups.
+    warnings: true,
+    compress: { // turn off a bunch stuff so we don't create unexpected errors.
+      unused: false,
+      properties: false,
+      dead_code: false,
+      side_effects: false
+    }
+  };
+
+  return gulp.src(['dist/scripts/lighthouse-background.js'])
+    .pipe(uglify(opts, uglifyJsHarmony).on('error', err => {
+      gutil.log(gutil.colors.red('[Error]'), err.toString());
+      // eslint-disable-next-line no-invalid-this
+      this.emit('end');
+    }))
+    .pipe(tap(file => {
+      const content = file.contents.toString();
+      file.contents = new Buffer(stripInlineLicenseComments(content));
+      return file;
+    }))
+    .pipe(gulp.dest('dist/scripts'));
 });
 
 gulp.task('clean', () => {
