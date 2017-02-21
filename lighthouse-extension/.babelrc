@@ -1,7 +1,0 @@
-{
-  "presets": ["es2015", ["babili", {
-    "evaluate": false,
-    "mangle": false,
-    "keepFnName": true
-  }]]
-}
