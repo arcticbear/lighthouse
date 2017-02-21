@@ -180,6 +180,7 @@ gulp.task('compilejs', () => {
       // eslint-disable-next-line no-invalid-this
       this.emit('end');
     }))
+    // TODO: strip out headers. This was causing errors, but we should do it.
     // .pipe(tap(file => {
     //   const content = file.contents.toString();
     //   file.contents = new Buffer(stripInlineLicenseComments(content));
